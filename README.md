@@ -21,3 +21,5 @@ Use cases:
 4. Technology stack and datastore choices
 5. Critical APIs - Select the top 3 most trafficked APIs and explain the
    design and implementation
+
+https://docs.google.com/document/d/13PgflspeNH8IbGCvzYUfyVy38nk3oUg_87aQiHWD4Pg/edit
