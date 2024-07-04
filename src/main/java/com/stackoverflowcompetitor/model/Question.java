@@ -18,6 +18,7 @@ public class Question {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long vote;
 
     @ManyToMany
     @JoinTable(
@@ -27,5 +28,4 @@ public class Question {
     )
     private List<Tag> tags;
 
-    // Getters and setters
 }

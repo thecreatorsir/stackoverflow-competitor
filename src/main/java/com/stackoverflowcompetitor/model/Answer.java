@@ -21,5 +21,5 @@ public class Answer {
     private String mediaUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
+    private Long vote;
 }
