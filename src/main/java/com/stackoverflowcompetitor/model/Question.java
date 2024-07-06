@@ -35,9 +35,11 @@ public class Question {
     private List<Tag> tags;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    //@JsonManagedReference
     private List<Answer> answers;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    //@JsonManagedReference
     private List<Vote> votes;
 
     @CreationTimestamp

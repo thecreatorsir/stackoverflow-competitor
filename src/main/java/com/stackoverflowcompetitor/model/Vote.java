@@ -1,5 +1,6 @@
 package com.stackoverflowcompetitor.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,10 +23,12 @@ public class Vote {
 
     @ManyToOne
     @JoinColumn(name = "question_id")
+    //@JsonBackReference
     private Question question;
 
     @ManyToOne
     @JoinColumn(name = "answer_id")
+    //@JsonBackReference
     private Answer answer;
 
     @CreationTimestamp

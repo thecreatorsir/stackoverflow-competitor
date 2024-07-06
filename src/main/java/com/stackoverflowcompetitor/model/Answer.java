@@ -1,5 +1,7 @@
 package com.stackoverflowcompetitor.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,16 +29,20 @@ public class Answer {
 
     @ManyToOne
     @JoinColumn(name = "question_id", nullable = false)
+    //@JsonBackReference
     private Question question;
 
     @ManyToOne
     @JoinColumn(name = "parent_answer_id")
+    //@JsonBackReference
     private Answer parentAnswer;
 
     @OneToMany(mappedBy = "parentAnswer", cascade = CascadeType.ALL, orphanRemoval = true)
+    //@JsonManagedReference
     private List<Answer> replies;
 
     @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true)
+    //@JsonManagedReference
     private List<Vote> votes;
 
     @CreationTimestamp
