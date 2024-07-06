@@ -1,5 +1,6 @@
 package com.stackoverflowcompetitor.service;
 
+import com.stackoverflowcompetitor.common.AuthenticatedUserDetails;
 import com.stackoverflowcompetitor.model.Answer;
 import com.stackoverflowcompetitor.model.Question;
 import com.stackoverflowcompetitor.model.User;
@@ -19,14 +20,15 @@ public class AnswerService {
     @Autowired
     private QuestionRepository questionRepository;
 
+    @Autowired
+    private AuthenticatedUserDetails authenticatedUserDetails;
+
     public Answer answerQuestion(Long questionId, Answer answer) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found with id: " + questionId));
         answer.setQuestion(question);
-//        User user = new User();
-//        user.setPassword("temp");
-//        user.setUsername("temp");
-//        answer.setUser(user);
+        User user = authenticatedUserDetails.getAuthenticatedUser();
+        answer.setUser(user);
         return answerRepository.save(answer);
     }
 
@@ -40,9 +42,8 @@ public class AnswerService {
 
         Question question = questionRepository.findById(questionID)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found with id: " + questionID));//        User user = new User();
-//        user.setPassword("temp");
-//        user.setUsername("temp");
-//        reply.setUser(user);
+        User user = authenticatedUserDetails.getAuthenticatedUser();
+        reply.setUser(user);
         reply.setQuestion(question);
         reply.setParentAnswer(parentAnswer);
         return answerRepository.save(reply);

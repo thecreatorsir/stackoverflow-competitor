@@ -15,6 +15,7 @@ public class Vote {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(columnDefinition = "TINYINT(1)")
     private boolean isUpvote;
 
     @ManyToOne
@@ -37,4 +38,14 @@ public class Vote {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Override
+    public String toString() {
+        return "Vote{" +
+                "id=" + id +
+                ", isUpvote=" + isUpvote +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
+    }
 }

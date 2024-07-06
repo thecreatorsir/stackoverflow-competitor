@@ -17,5 +17,10 @@ public class QuestionController {
     public Question postQuestion(@RequestBody Question question, @RequestParam List<Long> tagIds) {
         return questionService.postQuestion(question, tagIds);
     }
+
+    @GetMapping("/getAllQuestions")
+    public List<Question> getAllQuestions() {
+        return questionService.getAllQuestions();
+    }
 }
 
