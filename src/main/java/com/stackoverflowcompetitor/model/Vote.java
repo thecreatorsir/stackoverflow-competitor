@@ -19,16 +19,17 @@ public class Vote {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference(value = "user-votes")
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "question_id")
-    //@JsonBackReference
+    @JsonBackReference(value = "question-votes")
     private Question question;
 
     @ManyToOne
     @JoinColumn(name = "answer_id")
-    //@JsonBackReference
+    @JsonBackReference(value = "answer-votes")
     private Answer answer;
 
     @CreationTimestamp

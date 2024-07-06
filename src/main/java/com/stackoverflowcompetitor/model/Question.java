@@ -1,5 +1,6 @@
 package com.stackoverflowcompetitor.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -25,6 +26,7 @@ public class Question {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonBackReference(value = "user-questions")
     private User user;
 
     @ManyToMany
@@ -35,11 +37,11 @@ public class Question {
     private List<Tag> tags;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    //@JsonManagedReference
+    @JsonManagedReference(value = "question-answers")
     private List<Answer> answers;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    //@JsonManagedReference
+    @JsonManagedReference(value = "question-votes")
     private List<Vote> votes;
 
     @CreationTimestamp

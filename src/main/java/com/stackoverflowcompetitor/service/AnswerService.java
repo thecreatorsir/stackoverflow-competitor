@@ -30,13 +30,20 @@ public class AnswerService {
         return answerRepository.save(answer);
     }
 
-    public Answer answerToAnswer(Long answerId, Answer reply) {
+    public Answer answerToAnswer(Long answerId, Answer reply, Long questionID) {
         Answer parentAnswer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Answer not found with id: " + answerId));
-//        User user = new User();
+
+        if (!parentAnswer.getQuestion().getId().equals(questionID)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Question id mismatch");
+        }
+
+        Question question = questionRepository.findById(questionID)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found with id: " + questionID));//        User user = new User();
 //        user.setPassword("temp");
 //        user.setUsername("temp");
 //        reply.setUser(user);
+        reply.setQuestion(question);
         reply.setParentAnswer(parentAnswer);
         return answerRepository.save(reply);
     }

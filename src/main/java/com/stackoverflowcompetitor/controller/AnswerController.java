@@ -16,8 +16,8 @@ public class AnswerController {
         return answerService.answerQuestion(questionId, answer);
     }
 
-    @PostMapping("/{answerId}/reply")
-    public Answer answerToAnswer(@PathVariable Long answerId, @RequestBody Answer reply) {
-        return answerService.answerToAnswer(answerId, reply);
+    @PostMapping("/reply/{questionID}/{answerId}")
+    public Answer answerToAnswer(@PathVariable Long answerId, @RequestBody Answer reply, @PathVariable Long questionID) {
+        return answerService.answerToAnswer(answerId, reply, questionID);
     }
 }

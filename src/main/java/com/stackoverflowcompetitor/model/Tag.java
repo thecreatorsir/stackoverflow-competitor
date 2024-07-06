@@ -21,7 +21,7 @@ public class Tag {
     private String name;
 
     @ManyToMany(mappedBy = "tags")
-    //@JsonIgnore
+    @JsonIgnore
     private List<Question> questions;
 
     @CreationTimestamp
