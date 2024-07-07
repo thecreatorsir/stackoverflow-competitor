@@ -8,6 +8,8 @@ import com.stackoverflowcompetitor.repository.QuestionRepository;
 import com.stackoverflowcompetitor.repository.TagRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,6 +36,10 @@ public class QuestionService {
         User user = authenticatedUserDetails.getAuthenticatedUser();
         question.setUser(user);
         return questionRepository.save(question);
+    }
+
+    public Page<Question> getTopVotedQuestions(Pageable pageable) {
+        return questionRepository.findTopVotedQuestions(pageable);
     }
 
     public List<Question> getAllQuestions() {
