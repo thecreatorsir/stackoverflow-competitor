@@ -42,6 +42,10 @@ public class QuestionService {
         return questionRepository.findTopVotedQuestions(pageable);
     }
 
+    public List<Question> findByTagName(String tagName) {
+        return questionRepository.findByTags_Name(tagName);
+    }
+
     public List<Question> getAllQuestions() {
         return questionRepository.findAll();
     }

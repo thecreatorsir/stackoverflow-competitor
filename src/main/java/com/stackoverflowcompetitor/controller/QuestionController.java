@@ -31,6 +31,12 @@ public class QuestionController {
         return ResponseEntity.ok(topVotedQuestions);
     }
 
+    @GetMapping("/by-tag")
+    public ResponseEntity<List<Question>> getQuestionsByTag(@RequestParam String tag) {
+        List<Question> questions = questionService.findByTagName(tag);
+        return ResponseEntity.ok(questions);
+    }
+
     @GetMapping("/getAllQuestions")
     public List<Question> getAllQuestions() {
         return questionService.getAllQuestions();
