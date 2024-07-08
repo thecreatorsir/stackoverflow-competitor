@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/answers")
@@ -53,6 +55,24 @@ public class AnswerController {
         } catch (Exception e) {
             log.error("Error replying to answer: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    /**
+     * Retrieves answers based in searchTerm.
+     * @param searchTerm (the searchTerm)
+     * @return (the list of answers)
+     */
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Answer>> searchQuestions(@RequestParam String searchTerm) {
+        log.info("Fetching answers by term: {}", searchTerm);
+        try {
+            List<Answer> answers = answerService.searchAnswers(searchTerm);
+            return ResponseEntity.ok(answers);
+        } catch (Exception e) {
+            log.error("Error in searching the answer by text: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
         }
     }
 }

@@ -60,13 +60,13 @@ public class QuestionService {
         return questionRepository.findByTags_Name(tagName);
     }
 
-    /**
-     * Retrieves all questions.
-     *
-     * @return (the list of all questions)
-     */
     public List<Question> getAllQuestions() {
         log.info("In a findAllQuestions method");
         return questionRepository.findAll();
+    }
+
+    public List<Question> searchQuestions(String searchTerm) {
+        log.info("In a searchQuestions method");
+        return questionRepository.searchQuestionsByTitleOrContent(searchTerm);
     }
 }

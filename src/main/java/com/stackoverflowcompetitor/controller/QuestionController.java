@@ -95,4 +95,22 @@ public class QuestionController {
             return ResponseEntity.badRequest().body(null);
         }
     }
+
+    /**
+     * Retrieves questions based in searchTerm.
+     * @param searchTerm (the searchTerm)
+     * @return (the list of questions)
+     */
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Question>> searchQuestions(@RequestParam String searchTerm) {
+        log.info("Fetching questions by term: {}", searchTerm);
+        try {
+            List<Question> questions = questionService.searchQuestions(searchTerm);
+            return ResponseEntity.ok(questions);
+        } catch (Exception e) {
+            log.error("Error in searching the question by text: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
 }

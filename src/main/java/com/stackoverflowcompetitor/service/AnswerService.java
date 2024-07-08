@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 
 @Service
 @Slf4j
@@ -78,5 +80,9 @@ public class AnswerService {
             log.error("Error replying to answer with ID: {} for question ID: {}", answerId, questionID, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while replying to the answer", e);
         }
+    }
+    public List<Answer> searchAnswers(String searchTerm) {
+        log.info("In searchAnswers method");
+        return answerRepository.searchAnswerByContent(searchTerm);
     }
 }
