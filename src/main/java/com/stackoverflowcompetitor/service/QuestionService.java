@@ -1,23 +1,23 @@
 package com.stackoverflowcompetitor.service;
 
+import com.stackoverflowcompetitor.common.AuthenticatedUserDetails;
 import com.stackoverflowcompetitor.model.Question;
 import com.stackoverflowcompetitor.model.Tag;
 import com.stackoverflowcompetitor.model.User;
 import com.stackoverflowcompetitor.repository.QuestionRepository;
 import com.stackoverflowcompetitor.repository.TagRepository;
-import com.stackoverflowcompetitor.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
 public class QuestionService {
+
     @Autowired
     private QuestionRepository questionRepository;
 
@@ -25,25 +25,48 @@ public class QuestionService {
     private TagRepository tagRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private AuthenticatedUserDetails authenticatedUserDetails;
 
-    public Question postQuestion(Question question,List<Long> tagIds) {
 
-        // add tag to tag db if not present
-        log.info("tags element" + tagIds);
-         List<Tag> tags = tagRepository.findAllById(tagIds);
-        log.info("tags element" + tags);
-        question.setTags(tags);
+    public Question postQuestion(Question question, List<Long> tagIds) {
+        log.info("In a postQuestion method");
+        try {
+            List<Tag> tags = tagRepository.findAllById(tagIds);
+            if (tags.isEmpty()) {
+                log.warn("No tags found for IDs: {}", tagIds);
+            }
+            question.setTags(tags);
 
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        String currentUsername = authentication.getName();
-//
-//        log.info("current user name is {}", currentUsername);
-//        // Fetch the user from the database using the username
-//        User user = userRepository.findByUsername(currentUsername)
-//                .orElseThrow(() -> new IllegalStateException("Authenticated user not found in database"));
+            User user = authenticatedUserDetails.getAuthenticatedUser();
+            question.setUser(user);
 
-        return questionRepository.save(question);
+            log.info("Saving question by user: {}", user.getUsername());
+            return questionRepository.save(question);
+        } catch (Exception e) {
+            log.error("Error posting question: {}", e.getMessage());
+            throw new RuntimeException("Error posting question", e);
+        }
+    }
+
+
+    public Page<Question> getTopVotedQuestions(Pageable pageable) {
+        log.info("In a topVotedQuestions method");
+        return questionRepository.findTopVotedQuestions(pageable);
+    }
+
+
+    public List<Question> findByTagName(String tagName) {
+        log.info("In a findByTagName method");
+        return questionRepository.findByTags_Name(tagName);
+    }
+
+    public List<Question> getAllQuestions() {
+        log.info("In a findAllQuestions method");
+        return questionRepository.findAll();
+    }
+
+    public List<Question> searchQuestions(String searchTerm) {
+        log.info("In a searchQuestions method");
+        return questionRepository.searchQuestionsByTitleOrContent(searchTerm);
     }
 }
-
