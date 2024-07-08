@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -28,17 +29,29 @@ public class AnswerService {
     @Autowired
     private AuthenticatedUserDetails authenticatedUserDetails;
 
+    @Autowired
+    private MediaService mediaService;
 
-    public Answer answerQuestion(Long questionId, Answer answer) {
+    public Answer answerQuestion(Long questionId, String content, MultipartFile media) {
         log.info("In answerQuestion method");
         try {
             log.info("Finding question with ID: {}", questionId);
             Question question = questionRepository.findById(questionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found with id: " + questionId));
-            log.info("Setting question and user for the answer.");
+
+            String mediaUrl = null;
+            if (media != null && !media.isEmpty()) {
+                mediaUrl = mediaService.uploadFile(media);
+            }
+
+            Answer answer = new Answer();
+            answer.setContent(content);
+            answer.setMediaUrl(mediaUrl);
             answer.setQuestion(question);
+
             User user = authenticatedUserDetails.getAuthenticatedUser();
             answer.setUser(user);
+
             log.info("Saving answer for question ID: {}", questionId);
             return answerRepository.save(answer);
         } catch (ResponseStatusException e) {
@@ -50,8 +63,7 @@ public class AnswerService {
         }
     }
 
-
-    public Answer answerToAnswer(Long answerId, Answer reply, Long questionID) {
+    public Answer answerToAnswer(Long answerId, String content, MultipartFile media, Long questionID) {
         log.info("In answerToAnswer method");
         try {
             log.info("Finding parent answer with ID: {}", answerId);
@@ -66,11 +78,20 @@ public class AnswerService {
             Question question = questionRepository.findById(questionID)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found with id: " + questionID));
 
-            log.info("Setting question, user, and parent answer for the reply.");
-            User user = authenticatedUserDetails.getAuthenticatedUser();
-            reply.setUser(user);
+            String mediaUrl = null;
+            if (media != null && !media.isEmpty()) {
+                mediaUrl = mediaService.uploadFile(media);
+            }
+
+            Answer reply = new Answer();
+            reply.setContent(content);
+            reply.setMediaUrl(mediaUrl);
             reply.setQuestion(question);
             reply.setParentAnswer(parentAnswer);
+
+            User user = authenticatedUserDetails.getAuthenticatedUser();
+            reply.setUser(user);
+
             log.info("Saving reply for answer ID: {} and question ID: {}", answerId, questionID);
             return answerRepository.save(reply);
         } catch (ResponseStatusException e) {
@@ -81,6 +102,7 @@ public class AnswerService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while replying to the answer", e);
         }
     }
+
     public List<Answer> searchAnswers(String searchTerm) {
         log.info("In searchAnswers method");
         return answerRepository.searchAnswerByContent(searchTerm);

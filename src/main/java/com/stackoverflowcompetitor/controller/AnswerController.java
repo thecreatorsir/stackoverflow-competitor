@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,14 +24,17 @@ public class AnswerController {
      * Post an answer to a specific question.
      *
      * @param questionId (the ID of the question being answered)
-     * @param answer     (the answer to be posted)
+     * @param media     (the media to be posted)
+     * @param content     (the content to be posted)
      * @return (the posted answer)
      */
     @PostMapping("/question/{questionId}")
-    public ResponseEntity<Answer> answerQuestion(@PathVariable Long questionId, @RequestBody Answer answer) {
+    public ResponseEntity<Answer> answerQuestion(@PathVariable Long questionId,
+                                                 @RequestParam("content") String content,
+                                                 @RequestParam(value = "media", required = false) MultipartFile media) {
         log.info("Answering question with ID: {}", questionId);
         try {
-            Answer postedAnswer = answerService.answerQuestion(questionId, answer);
+            Answer postedAnswer = answerService.answerQuestion(questionId, content, media);
             return ResponseEntity.ok(postedAnswer);
         } catch (Exception e) {
             log.error("Error answering question: {}", e.getMessage());
@@ -42,15 +46,19 @@ public class AnswerController {
      * Post a reply to an existing answer.
      *
      * @param answerId   (the ID of the parent answer)
-     * @param reply      (the reply to be posted)
+     * @param media      (the media to be posted)
+     * @param content    (the content to be posted)
      * @param questionID (the ID of the question associated with the answer)
      * @return (the posted reply)
      */
     @PostMapping("/reply/{questionID}/{answerId}")
-    public ResponseEntity<Answer> answerToAnswer(@PathVariable Long answerId, @RequestBody Answer reply, @PathVariable Long questionID) {
+    public ResponseEntity<Answer> answerToAnswer(@PathVariable Long answerId,
+                                                 @RequestParam("content") String content,
+                                                 @RequestParam(value = "media", required = false) MultipartFile media,
+                                                 @PathVariable Long questionID) {
         log.info("Replying to answer with ID: {} for question ID: {}", answerId, questionID);
         try {
-            Answer postedReply = answerService.answerToAnswer(answerId, reply, questionID);
+            Answer postedReply = answerService.answerToAnswer(answerId, content, media, questionID);
             return ResponseEntity.ok(postedReply);
         } catch (Exception e) {
             log.error("Error replying to answer: {}", e.getMessage());

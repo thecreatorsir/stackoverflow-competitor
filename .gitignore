@@ -34,3 +34,4 @@ build/
 
 ### Project Files
 src/main/resources/application-local.properties
+src/main/resources/static/media
