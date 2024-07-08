@@ -3,15 +3,11 @@ package com.stackoverflowcompetitor.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Data
-public class Tag {
+public class Tag extends DateTimeCreation{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,11 +19,5 @@ public class Tag {
     @ManyToMany(mappedBy = "tags")
     @JsonIgnore
     private List<Question> questions;
-
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 
 }
