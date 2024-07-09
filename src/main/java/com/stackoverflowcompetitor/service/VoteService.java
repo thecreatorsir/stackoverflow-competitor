@@ -1,102 +1,65 @@
 package com.stackoverflowcompetitor.service;
 
 import com.stackoverflowcompetitor.common.AuthenticatedUserDetails;
-import com.stackoverflowcompetitor.model.Answer;
-import com.stackoverflowcompetitor.model.Question;
 import com.stackoverflowcompetitor.model.User;
 import com.stackoverflowcompetitor.model.Vote;
-import com.stackoverflowcompetitor.repository.AnswerRepository;
-import com.stackoverflowcompetitor.repository.QuestionRepository;
-import com.stackoverflowcompetitor.repository.VoteRepository;
+import com.stackoverflowcompetitor.service.strategy.AnswerVoteStrategy;
+import com.stackoverflowcompetitor.service.strategy.QuestionVoteStrategy;
+import com.stackoverflowcompetitor.service.strategy.VoteStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
 
 @Service
 @Slf4j
 public class VoteService {
 
     @Autowired
-    private VoteRepository voteRepository;
-
-    @Autowired
-    private QuestionRepository questionRepository;
-
-    @Autowired
-    private AnswerRepository answerRepository;
-
-    @Autowired
     private AuthenticatedUserDetails authenticatedUserDetails;
+
+    @Autowired
+    private QuestionVoteStrategy questionVoteStrategy;
+
+    @Autowired
+    private AnswerVoteStrategy answerVoteStrategy;
 
     @Transactional
     public Vote voteForQuestion(Long questionId, boolean isUpvote) {
-        log.info("In a voteForQuestion method");
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> {
-                    log.error("Question not found with ID: {}", questionId);
-                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found with id: " + questionId);
-                });
-
-        User user = authenticatedUserDetails.getAuthenticatedUser();
-        Vote existingVote = voteRepository.findByUserAndQuestion(user, question);
-
-        if (existingVote != null) {
-            log.info("Existing vote for Question: {}", existingVote.toString());
-            if (existingVote.isUpvote() == isUpvote) {
-                log.info("Resetting the vote for question with ID: {}", questionId);
-                voteRepository.delete(existingVote);
-                return null; // Return null to indicate the vote was reset
-            } else {
-                log.info("Changing the existing vote from {} to {}", existingVote.isUpvote(), isUpvote);
-                existingVote.setUpvote(isUpvote);
-                voteRepository.save(existingVote);
-                return existingVote;
-            }
-        }
-
-        Vote vote = new Vote();
-        vote.setUpvote(isUpvote);
-        vote.setQuestion(question);
-        vote.setUser(user);
-        log.info("User {} voted {} for questionId {}", user.getUsername(), isUpvote, questionId);
-        return voteRepository.save(vote);
+        return vote(questionId, isUpvote, questionVoteStrategy);
     }
 
     @Transactional
     public Vote voteForAnswer(Long answerId, boolean isUpvote) {
-        log.info("In a voteForAnswer method");
-        Answer answer = answerRepository.findById(answerId)
-                .orElseThrow(() -> {
-                    log.error("Answer not found with ID: {}", answerId);
-                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Answer not found with id: " + answerId);
-                });
+        return vote(answerId, isUpvote, answerVoteStrategy);
+    }
 
+    private <T> Vote vote(Long id, boolean isUpvote, VoteStrategy<T> strategy) {
+        log.info("In a vote method");
+
+        T entity = strategy.findEntityById(id);
         User user = authenticatedUserDetails.getAuthenticatedUser();
-        Vote existingVote = voteRepository.findByUserAndAnswer(user, answer);
+        Vote existingVote = strategy.findVoteByUserAndEntity(user, entity);
 
         if (existingVote != null) {
-            log.info("Existing vote for Answer: {}", existingVote.toString());
+            log.info("Existing vote for Entity: {}", existingVote.toString());
             if (existingVote.isUpvote() == isUpvote) {
-                log.info("Resetting the vote for answer with ID: {}", answerId);
-                voteRepository.delete(existingVote);
+                log.info("Resetting the vote for entity with ID: {}", id);
+                strategy.deleteVote(existingVote);
                 return null; // Return null to indicate the vote was reset
             } else {
                 log.info("Changing the existing vote from {} to {}", existingVote.isUpvote(), isUpvote);
                 existingVote.setUpvote(isUpvote);
-                voteRepository.save(existingVote);
+                strategy.saveVote(existingVote);
                 return existingVote;
             }
         }
 
         Vote vote = new Vote();
         vote.setUpvote(isUpvote);
-        vote.setAnswer(answer);
+        strategy.setEntity(vote, entity);
         vote.setUser(user);
-        log.info("User {} voted {} for answerId {}", user.getUsername(), isUpvote, answerId);
-        return voteRepository.save(vote);
+        log.info("User {} voted {} for entityId {}", user.getUsername(), isUpvote, id);
+        return strategy.saveVote(vote);
     }
 }
