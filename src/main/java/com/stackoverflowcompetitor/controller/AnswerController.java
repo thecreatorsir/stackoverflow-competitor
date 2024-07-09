@@ -73,7 +73,7 @@ public class AnswerController {
      */
 
     @GetMapping("/search")
-    public ResponseEntity<List<Answer>> searchQuestions(@RequestParam String searchTerm) {
+    public ResponseEntity<List<Answer>> searchAnswers(@RequestParam String searchTerm) {
         log.info("Fetching answers by term: {}", searchTerm);
         try {
             List<Answer> answers = answerService.searchAnswers(searchTerm);

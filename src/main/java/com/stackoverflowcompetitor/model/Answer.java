@@ -4,15 +4,11 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Data
-public class Answer {
+public class Answer extends DateTimeCreation{
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -24,7 +20,7 @@ public class Answer {
     private String mediaUrl;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     @JsonBackReference(value = "user-answers")
     private User user;
 
@@ -46,9 +42,4 @@ public class Answer {
     @JsonManagedReference(value = "answer-votes")
     private List<Vote> votes;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 }
