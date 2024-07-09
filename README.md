@@ -10,8 +10,7 @@ StackOverflowCompetitor is a web application designed to mimic the functionality
 2. Users can create a profile (Register, Login, Logout)
 3. Users can post a question, tag a question
 4. Users can answer to a question.
-5. Rich media content (photos/videos)
-   can be added as an answer.
+5. Rich media content (photos/videos) can be added as an answer.
 6. Users can answer to an answer.
 7. Users can vote for an answer or question
 8. Users can search the tags and browse the questions by tags
@@ -92,7 +91,7 @@ Security is one of the key features for any application to stay protected. In my
      
 8. **POST /votes/answer/{answerId}/{isUpvote}**
    - Vote an answer.
-     
+
 9. **GET /questions/top-voted**
    - Retrieve top-voted questions.
 
@@ -114,20 +113,20 @@ Security is one of the key features for any application to stay protected. In my
 <a href="https://ibb.co/KWzFgXs"><img src="https://i.ibb.co/qpFk8dg/User-Sequence-Diagram.png" alt="User-Sequence-Diagram" border="0"></a>
 
 #### Answer Flow
-<a href="https://ibb.co/9Z3jdLJ"><img src="https://i.ibb.co/DrgnjyN/Answer-Squence-Diagram.png" alt="Answer-Squence-Diagram" border="0"></a>
+<a href="https://ibb.co/9r6QRnN"><img src="https://i.ibb.co/1m1FHZL/Answer-Squence-Diagram.png" alt="Answer-Sequence-Diagram" border="0"></a>
 
 #### Question Flow
-<a href="https://ibb.co/S5rMNVD"><img src="https://i.ibb.co/9ct1nym/Question-sequence-diagram.png" alt="Question-sequence-diagram" border="0"></a>
+<a href="https://ibb.co/9grRbDN"><img src="https://i.ibb.co/nmLh7Gb/Question-sequence-diagram.png" alt="Question-sequence-diagram" border="0"></a>
 
 #### Vote Flow
 <a href="https://ibb.co/Lh4sxpw"><img src="https://i.ibb.co/yBLx6sT/Vote-sequence-diagram.png" alt="Vote-sequence-diagram" border="0"></a>
 
 ### Expected Outcomes:
 1. State the assumptions ✅
-2. High level design of components/micro services and interaction
+2. High-level design of components/microservices and interaction
    between components ✅
 3. Database schema design ✅
-4. Technology stack and datastore choices ✅
+4. Technology stack and data store choices ✅
 5. Critical APIs - Select the top 3 most trafficked APIs and explain the
    design and implementation
 
