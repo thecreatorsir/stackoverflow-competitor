@@ -134,7 +134,7 @@ class AnswerControllerTest {
         mockMvc.perform(get("/answers/search")
                         .param("searchTerm", "Test")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
 
         verify(answerService, times(1)).searchAnswers(anyString());
     }

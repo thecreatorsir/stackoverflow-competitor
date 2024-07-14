@@ -3,6 +3,8 @@ package com.stackoverflowcompetitor.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stackoverflowcompetitor.model.User;
 import com.stackoverflowcompetitor.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,26 +12,22 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.mockito.ArgumentMatchers.*;
+import jakarta.servlet.http.HttpServletRequest;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AuthControllerTest {
 
     @Mock
     private UserService userService;
-
-    @Mock
-    private AuthenticationManager authenticationManager;
 
     @InjectMocks
     private AuthController authController;
@@ -60,6 +58,23 @@ class AuthControllerTest {
     }
 
     @Test
+    void testRegisterUser_ValidationFailure() throws Exception {
+        User user = new User();
+        user.setUsername("testuser");
+        user.setPassword("testpassword");
+
+        doThrow(new ValidationException("Validation error")).when(userService).registerUser(any(User.class));
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(user)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Validation error"));
+
+        verify(userService, times(1)).registerUser(any(User.class));
+    }
+
+    @Test
     void testRegisterUser_Failure() throws Exception {
         User user = new User();
         user.setUsername("testuser");
@@ -70,19 +85,20 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(user)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Registration failed: Registration failed"));
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string("Failed to register user: Registration failed"));
 
         verify(userService, times(1)).registerUser(any(User.class));
     }
+
 
     @Test
     void testLoginUser_Success() throws Exception {
         String username = "testuser";
         String password = "testpassword";
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(username, password);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        when(userService.loginUser(eq(username), eq(password), any(HttpServletRequest.class)))
+                .thenReturn("User logged in successfully");
 
         mockMvc.perform(post("/auth/login")
                         .param("username", username)
@@ -90,15 +106,18 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("User logged in successfully"));
 
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(userService, times(1)).loginUser(eq(username), eq(password), any(HttpServletRequest.class));
     }
+
+
 
     @Test
     void testLoginUser_BadCredentials() throws Exception {
         String username = "testuser";
         String password = "invalidpassword";
+        HttpServletRequest request = mock(HttpServletRequest.class);
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+        when(userService.loginUser(eq(username), eq(password), any(HttpServletRequest.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
         mockMvc.perform(post("/auth/login")
@@ -107,52 +126,52 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string("Invalid username or password"));
 
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(userService, times(1)).loginUser(eq(username), eq(password), any(HttpServletRequest.class));
     }
+
 
     @Test
     void testLoginUser_Failure() throws Exception {
         String username = "testuser";
         String password = "testpassword";
+        HttpServletRequest request = mock(HttpServletRequest.class);
 
-        doThrow(new RuntimeException("Login failed")).when(authenticationManager).authenticate(any());
+        when(userService.loginUser(eq(username), eq(password), any(HttpServletRequest.class)))
+                .thenThrow(new RuntimeException("Login failed"));
 
         mockMvc.perform(post("/auth/login")
                         .param("username", username)
                         .param("password", password))
                 .andExpect(status().isInternalServerError())
-                .andExpect(content().string("Login failed: Login failed"));
+                .andExpect(content().string("Failed to login user: Login failed"));
 
-        verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(userService, times(1)).loginUser(eq(username), eq(password), any(HttpServletRequest.class));
     }
+
 
     @Test
     void testLogoutUser_Success() throws Exception {
-        Authentication authentication = mock(Authentication.class);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
+        HttpServletRequest request = mock(HttpServletRequest.class);
         MockHttpServletResponse response = new MockHttpServletResponse();
+
+        doNothing().when(userService).logoutUser(request, response);
 
         mockMvc.perform(post("/auth/logout"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("User logged out successfully"));
 
-        verify(authentication, times(1)).getName();
+        verify(userService, times(1)).logoutUser(any(HttpServletRequest.class), any(HttpServletResponse.class));
     }
 
     @Test
     void testLogoutUser_Failure() throws Exception {
-        Authentication authentication = mock(Authentication.class);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        doThrow(new RuntimeException("Logout failed")).when(authentication).getName();
+        doThrow(new RuntimeException("Logout failed")).when(userService).logoutUser(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
         mockMvc.perform(post("/auth/logout"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(content().string("Logout failed: Logout failed"));
+                .andExpect(content().string("Failed to logout user: Logout failed"));
 
-        verify(authentication, times(1)).getName();
+        verify(userService, times(1)).logoutUser(any(HttpServletRequest.class), any(HttpServletResponse.class));
     }
+
 }

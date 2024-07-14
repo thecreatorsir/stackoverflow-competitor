@@ -14,10 +14,10 @@ public class Question extends DateTimeCreation{
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 250)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 2000)
     private String content;
 
     @ManyToOne

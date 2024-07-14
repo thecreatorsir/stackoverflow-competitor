@@ -2,12 +2,14 @@ package com.stackoverflowcompetitor.controller;
 
 import com.stackoverflowcompetitor.model.Answer;
 import com.stackoverflowcompetitor.service.AnswerService;
+import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -36,9 +38,10 @@ public class AnswerController {
         try {
             Answer postedAnswer = answerService.answerQuestion(questionId, content, media);
             return ResponseEntity.ok(postedAnswer);
+        } catch (ResponseStatusException | ValidationException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error answering question: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while answering the question", e);
         }
     }
 
@@ -60,9 +63,10 @@ public class AnswerController {
         try {
             Answer postedReply = answerService.answerToAnswer(answerId, content, media, questionID);
             return ResponseEntity.ok(postedReply);
+        } catch (ResponseStatusException | ValidationException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error replying to answer: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while replying to the answer", e);
         }
     }
 
@@ -78,9 +82,11 @@ public class AnswerController {
         try {
             List<Answer> answers = answerService.searchAnswers(searchTerm);
             return ResponseEntity.ok(answers);
-        } catch (Exception e) {
-            log.error("Error in searching the answer by text: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
+        } catch (ValidationException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while searching for answers", e);
         }
     }
 }

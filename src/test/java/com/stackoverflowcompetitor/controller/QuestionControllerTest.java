@@ -9,9 +9,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -68,7 +66,7 @@ class QuestionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ \"title\": \"Test Question\" }")
                         .param("tagIds", "1", "2"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
 
         verify(questionService, times(1)).postQuestion(any(Question.class), anyList());
     }
@@ -143,7 +141,7 @@ class QuestionControllerTest {
 
         mockMvc.perform(get("/questions/by-tag")
                         .param("tag", "java"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
 
         verify(questionService, times(1)).findByTagName(anyString());
     }
@@ -177,7 +175,7 @@ class QuestionControllerTest {
         when(questionService.getAllQuestions()).thenThrow(new RuntimeException("Error"));
 
         mockMvc.perform(get("/questions/getAllQuestions"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
 
         verify(questionService, times(1)).getAllQuestions();
     }
@@ -213,7 +211,7 @@ class QuestionControllerTest {
 
         mockMvc.perform(get("/questions/search")
                         .param("searchTerm", "java"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
 
         verify(questionService, times(1)).searchQuestions(anyString());
     }

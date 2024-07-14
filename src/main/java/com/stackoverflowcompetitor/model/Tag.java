@@ -13,7 +13,7 @@ public class Tag extends DateTimeCreation{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 15)
     private String name;
 
     @ManyToMany(mappedBy = "tags")

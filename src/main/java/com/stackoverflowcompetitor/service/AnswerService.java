@@ -6,6 +6,9 @@ import com.stackoverflowcompetitor.model.Question;
 import com.stackoverflowcompetitor.model.User;
 import com.stackoverflowcompetitor.repository.AnswerRepository;
 import com.stackoverflowcompetitor.repository.QuestionRepository;
+import com.stackoverflowcompetitor.util.Constants;
+import com.stackoverflowcompetitor.util.ValidationUtil;
+import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -32,10 +36,13 @@ public class AnswerService {
     @Autowired
     private MediaService mediaService;
 
-    public Answer answerQuestion(Long questionId, String content, MultipartFile media) {
+    public Answer answerQuestion(Long questionId, String content, MultipartFile media) throws IOException {
         log.info("In answerQuestion method");
         try {
-            log.info("Finding question with ID: {}", questionId);
+            if(ValidationUtil.validateLength(content, Constants.MIN_CONTENT_LENGTH, Constants.MAX_CONTENT_LENGTH)){
+                log.error("Invalid Content length");
+                throw new ValidationException("Content length must be between " + Constants.MIN_CONTENT_LENGTH + " and " + Constants.MAX_CONTENT_LENGTH + " characters");
+            }
             Question question = questionRepository.findById(questionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found with id: " + questionId));
 
@@ -54,18 +61,24 @@ public class AnswerService {
 
             log.info("Saving answer for question ID: {}", questionId);
             return answerRepository.save(answer);
-        } catch (ResponseStatusException e) {
-            log.error("Error finding question with ID: {}", questionId, e);
+        }catch (IOException e) {
+            log.error("Error uploading media for question ID: {}", questionId);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload media", e);
+        } catch (ValidationException | ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error answering question with ID: {}", questionId, e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while answering the question", e);
+            log.error("Error answering question with ID: {}", questionId);
+            throw e;
         }
     }
 
-    public Answer answerToAnswer(Long answerId, String content, MultipartFile media, Long questionID) {
+    public Answer answerToAnswer(Long answerId, String content, MultipartFile media, Long questionID) throws IOException {
         log.info("In answerToAnswer method");
         try {
+            if(ValidationUtil.validateLength(content, Constants.MIN_CONTENT_LENGTH, Constants.MAX_CONTENT_LENGTH)){
+                log.error("Invalid Content length");
+                throw new ValidationException("Content length must be between " + Constants.MIN_CONTENT_LENGTH + " and " + Constants.MAX_CONTENT_LENGTH + " characters");
+            }
             log.info("Finding parent answer with ID: {}", answerId);
             Answer parentAnswer = answerRepository.findById(answerId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Answer not found with id: " + answerId));
@@ -94,17 +107,31 @@ public class AnswerService {
 
             log.info("Saving reply for answer ID: {} and question ID: {}", answerId, questionID);
             return answerRepository.save(reply);
-        } catch (ResponseStatusException e) {
-            log.error("Error handling reply to answer with ID: {} for question ID: {}", answerId, questionID, e);
+        } catch (IOException e) {
+            log.error("Error uploading media for answer ID: {}", answerId, e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload media", e);
+        }catch (ValidationException | ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error replying to answer with ID: {} for question ID: {}", answerId, questionID, e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while replying to the answer", e);
+            log.error("Error replying to answer with ID: {} for question ID: {}", answerId, questionID);
+            throw e;
         }
     }
 
     public List<Answer> searchAnswers(String searchTerm) {
         log.info("In searchAnswers method");
-        return answerRepository.searchAnswerByContent(searchTerm);
+        try {
+            if(ValidationUtil.validateLength(searchTerm, Constants.MIN_SEARCH_STRING_LENGTH, Constants.MAX_SEARCH_STRING_LENGTH)){
+                log.error("Invalid searchTerm length");
+                throw new ValidationException("searchTerm length must be between " + Constants.MIN_SEARCH_STRING_LENGTH + " and " + Constants.MAX_SEARCH_STRING_LENGTH + " characters");
+            }
+            return answerRepository.searchAnswerByContent(searchTerm);
+        } catch (ValidationException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            log.error("Error while searching an answer by text: {}", searchTerm);
+            throw e;
+        }
     }
 }

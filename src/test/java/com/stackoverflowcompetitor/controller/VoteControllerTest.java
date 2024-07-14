@@ -7,9 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.server.ResponseStatusException;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -61,6 +63,18 @@ class VoteControllerTest {
     }
 
     @Test
+    void testVoteForQuestion_ResponseStatusException() throws Exception {
+        when(voteService.voteForQuestion(anyLong(), anyBoolean())).thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request"));
+
+        mockMvc.perform(post("/votes/question/1/true")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("Invalid request"));
+
+        verify(voteService, times(1)).voteForQuestion(anyLong(), anyBoolean());
+    }
+
+    @Test
     void testVoteForAnswer_Success() throws Exception {
         Vote vote = new Vote();
         vote.setId(1L);
@@ -87,4 +101,17 @@ class VoteControllerTest {
 
         verify(voteService, times(1)).voteForAnswer(anyLong(), anyBoolean());
     }
+
+    @Test
+    void testVoteForAnswer_ResponseStatusException() throws Exception {
+        when(voteService.voteForAnswer(anyLong(), anyBoolean())).thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request"));
+
+        mockMvc.perform(post("/votes/answer/1/true")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("Invalid request"));
+
+        verify(voteService, times(1)).voteForAnswer(anyLong(), anyBoolean());
+    }
+
 }
