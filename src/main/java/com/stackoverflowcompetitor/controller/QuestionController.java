@@ -2,6 +2,7 @@ package com.stackoverflowcompetitor.controller;
 
 import com.stackoverflowcompetitor.model.Question;
 import com.stackoverflowcompetitor.service.QuestionService;
+import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -34,9 +36,11 @@ public class QuestionController {
         try {
             Question postedQuestion = questionService.postQuestion(question, tagIds);
             return ResponseEntity.ok(postedQuestion);
-        } catch (Exception e) {
-            log.error("Error posting question: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
+        } catch (ValidationException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while posting a question", e);
         }
     }
 
@@ -57,8 +61,7 @@ public class QuestionController {
             Page<Question> topVotedQuestions = questionService.getTopVotedQuestions(pageable);
             return ResponseEntity.ok(topVotedQuestions);
         } catch (Exception e) {
-            log.error("Error fetching top-voted questions: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while getting top voted questions", e);
         }
     }
     /**
@@ -74,8 +77,7 @@ public class QuestionController {
             List<Question> questions = questionService.findByTagName(tag);
             return ResponseEntity.ok(questions);
         } catch (Exception e) {
-            log.error("Error fetching questions by tag: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred getting a question by tag", e);
         }
     }
 
@@ -91,8 +93,7 @@ public class QuestionController {
             List<Question> questions = questionService.getAllQuestions();
             return ResponseEntity.ok(questions);
         } catch (Exception e) {
-            log.error("Error fetching all questions: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while getting all the question", e);
         }
     }
 
@@ -108,9 +109,11 @@ public class QuestionController {
         try {
             List<Question> questions = questionService.searchQuestions(searchTerm);
             return ResponseEntity.ok(questions);
-        } catch (Exception e) {
-            log.error("Error in searching the question by text: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
+        }catch (ValidationException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while searching for questions", e);
         }
     }
 }

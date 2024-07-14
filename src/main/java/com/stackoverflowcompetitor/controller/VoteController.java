@@ -4,8 +4,10 @@ import com.stackoverflowcompetitor.model.Vote;
 import com.stackoverflowcompetitor.service.VoteService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/votes")
@@ -24,13 +26,13 @@ public class VoteController {
      */
     @PostMapping("/question/{questionId}/{isUpvote}")
     public ResponseEntity<Vote> voteForQuestion(@PathVariable Long questionId, @PathVariable boolean isUpvote) {
-        log.info("Voting for question with ID: {} and upvote: {}", questionId, isUpvote);
         try {
             Vote vote = voteService.voteForQuestion(questionId, isUpvote);
             return ResponseEntity.ok(vote);
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error voting for question with ID: {}", questionId, e);
-            return ResponseEntity.status(500).body(null);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while voting for the question", e);
         }
     }
 
@@ -43,13 +45,13 @@ public class VoteController {
      */
     @PostMapping("/answer/{answerId}/{isUpvote}")
     public ResponseEntity<Vote> voteForAnswer(@PathVariable Long answerId, @PathVariable boolean isUpvote) {
-        log.info("Voting for answer with ID: {} and upvote: {}", answerId, isUpvote);
         try {
             Vote vote = voteService.voteForAnswer(answerId, isUpvote);
             return ResponseEntity.ok(vote);
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error voting for answer with ID: {}", answerId, e);
-            return ResponseEntity.status(500).body(null);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while voting for the answer", e);
         }
     }
 }
