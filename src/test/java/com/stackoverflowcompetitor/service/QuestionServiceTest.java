@@ -6,6 +6,8 @@ import com.stackoverflowcompetitor.model.Tag;
 import com.stackoverflowcompetitor.model.User;
 import com.stackoverflowcompetitor.repository.QuestionRepository;
 import com.stackoverflowcompetitor.repository.TagRepository;
+import com.stackoverflowcompetitor.util.Constants;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -52,6 +54,7 @@ class QuestionServiceTest {
         question = new Question();
         question.setId(1L);
         question.setTitle("Test Question");
+        question.setContent("Test Content");
 
         tag = new Tag();
         tag.setId(1L);
@@ -75,11 +78,23 @@ class QuestionServiceTest {
         verify(questionRepository, times(1)).save(question);
     }
 
+    @Test
+    void testPostQuestion_InvalidContentLength() {
+        List<Long> tagIds = List.of(1L);
+        question.setContent(""); // Set invalid content
+
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
+            questionService.postQuestion(question, tagIds);
+        });
+
+        assertEquals("Content length must be between " + Constants.MIN_CONTENT_LENGTH + " and " + Constants.MAX_CONTENT_LENGTH + " characters", exception.getMessage());
+        verify(questionRepository, never()).save(any(Question.class));
+    }
 
     @Test
     void testPostQuestion_Error() {
         List<Long> tagIds = List.of(1L);
-        when(tagRepository.findAllById(tagIds)).thenThrow(new RuntimeException("Database error"));
+        when(tagRepository.findAllById(tagIds)).thenThrow(new RuntimeException("Error posting question"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             questionService.postQuestion(question, tagIds);
@@ -118,6 +133,20 @@ class QuestionServiceTest {
     }
 
     @Test
+    void testPostQuestion_InvalidTitleLength() {
+        List<Long> tagIds = List.of(1L);
+        question.setTitle(""); // Set invalid title
+
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
+            questionService.postQuestion(question, tagIds);
+        });
+
+        assertEquals("Title length must be between " + Constants.MIN_TITLE_LENGTH + " and " + Constants.MAX_TITLE_LENGTH + " characters", exception.getMessage());
+        verify(questionRepository, never()).save(any(Question.class));
+    }
+
+
+    @Test
     void testGetAllQuestions() {
         List<Question> questions = List.of(question);
 
@@ -142,5 +171,17 @@ class QuestionServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         verify(questionRepository, times(1)).searchQuestionsByTitleOrContent(searchTerm);
+    }
+
+    @Test
+    void testSearchQuestions_InvalidSearchTermLength() {
+        String searchTerm = ""; // Set invalid search term
+
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
+            questionService.searchQuestions(searchTerm);
+        });
+
+        assertEquals("searchTerm length must be between " + Constants.MIN_SEARCH_STRING_LENGTH + " and " + Constants.MAX_SEARCH_STRING_LENGTH + " characters", exception.getMessage());
+        verify(questionRepository, never()).searchQuestionsByTitleOrContent(anyString());
     }
 }

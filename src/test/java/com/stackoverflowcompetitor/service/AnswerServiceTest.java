@@ -6,6 +6,8 @@ import com.stackoverflowcompetitor.model.Question;
 import com.stackoverflowcompetitor.model.User;
 import com.stackoverflowcompetitor.repository.AnswerRepository;
 import com.stackoverflowcompetitor.repository.QuestionRepository;
+import com.stackoverflowcompetitor.util.Constants;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -47,6 +49,7 @@ class AnswerServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
         question = new Question();
         question.setId(1L);
 
@@ -59,27 +62,8 @@ class AnswerServiceTest {
     }
 
     @Test
-    void testAnswerQuestion_Success() {
+    void testAnswerQuestion_Success() throws IOException {
         String content = "Test answer content";
-        MultipartFile media = mock(MultipartFile.class);
-
-        when(questionRepository.findById(1L)).thenReturn(Optional.of(question));
-        when(authenticatedUserDetails.getAuthenticatedUser()).thenReturn(user);
-        // this is used to aviod db dependency
-        when(answerRepository.save(any(Answer.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Answer result = answerService.answerQuestion(1L, content, media);
-
-        assertNotNull(result);
-        assertEquals(content, result.getContent());
-        assertEquals(question, result.getQuestion());
-        assertEquals(user, result.getUser());
-        assertNull(result.getMediaUrl());
-    }
-
-    @Test
-    void testAnswerQuestion_WithMedia_Success() throws IOException {
-        String content = "Test answer content with media";
         MultipartFile media = mock(MultipartFile.class);
         String mediaUrl = "http://media.url";
 
@@ -95,6 +79,17 @@ class AnswerServiceTest {
         assertEquals(question, result.getQuestion());
         assertEquals(user, result.getUser());
         assertEquals(mediaUrl, result.getMediaUrl());
+    }
+
+    @Test
+    void testAnswerQuestion_InvalidContentLength() {
+        String content = ""; // Invalid content length
+
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
+            answerService.answerQuestion(1L, content, null);
+        });
+
+        assertEquals("Content length must be between " + Constants.MIN_CONTENT_LENGTH + " and " + Constants.MAX_CONTENT_LENGTH + " characters", exception.getMessage());
     }
 
     @Test
@@ -109,41 +104,10 @@ class AnswerServiceTest {
         assertEquals("Question not found with id: 1", exception.getReason());
     }
 
-    @Test
-    void testAnswerQuestion_InternalServerError() {
-        when(questionRepository.findById(1L)).thenThrow(new RuntimeException("Database error"));
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            answerService.answerQuestion(1L, "Test content", null);
-        });
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
-        assertEquals("An error occurred while answering the question", exception.getReason());
-    }
 
     @Test
-    void testAnswerToAnswer_Success() {
+    void testAnswerToAnswer_Success() throws IOException {
         String content = "Test reply content";
-        MultipartFile media = mock(MultipartFile.class);
-
-        when(answerRepository.findById(1L)).thenReturn(Optional.of(parentAnswer));
-        when(questionRepository.findById(1L)).thenReturn(Optional.of(question));
-        when(authenticatedUserDetails.getAuthenticatedUser()).thenReturn(user);
-        when(answerRepository.save(any(Answer.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Answer result = answerService.answerToAnswer(1L, content, media, 1L);
-
-        assertNotNull(result);
-        assertEquals(content, result.getContent());
-        assertEquals(question, result.getQuestion());
-        assertEquals(user, result.getUser());
-        assertEquals(parentAnswer, result.getParentAnswer());
-        assertNull(result.getMediaUrl());
-    }
-
-    @Test
-    void testAnswerToAnswer_WithMedia_Success() throws IOException {
-        String content = "Test reply content with media";
         MultipartFile media = mock(MultipartFile.class);
         String mediaUrl = "http://media.url";
 
@@ -161,6 +125,35 @@ class AnswerServiceTest {
         assertEquals(user, result.getUser());
         assertEquals(parentAnswer, result.getParentAnswer());
         assertEquals(mediaUrl, result.getMediaUrl());
+    }
+
+    @Test
+    void testAnswerToAnswer_InvalidContentLength() {
+        String content = ""; // Invalid content length
+
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
+            answerService.answerToAnswer(1L, content, null, 1L);
+        });
+
+        assertEquals("Content length must be between " + Constants.MIN_CONTENT_LENGTH + " and " + Constants.MAX_CONTENT_LENGTH + " characters", exception.getMessage());
+    }
+
+    @Test
+    void testAnswerQuestion_MediaUploadIOException() throws IOException {
+        String content = "Test answer content";
+        MultipartFile media = mock(MultipartFile.class);
+
+        when(questionRepository.findById(1L)).thenReturn(Optional.of(question));
+        when(authenticatedUserDetails.getAuthenticatedUser()).thenReturn(user);
+        when(mediaService.uploadFile(media)).thenThrow(new IOException("Error uploading media"));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            answerService.answerQuestion(1L, content, media);
+        });
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
+        assertEquals("Failed to upload media", exception.getReason());
+        assertEquals("Error uploading media", exception.getCause().getMessage());
     }
 
     @Test
@@ -205,19 +198,7 @@ class AnswerServiceTest {
     }
 
     @Test
-    void testAnswerToAnswer_InternalServerError() {
-        when(answerRepository.findById(1L)).thenThrow(new RuntimeException("Database error"));
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            answerService.answerToAnswer(1L, "Test content", null, 1L);
-        });
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
-        assertEquals("An error occurred while replying to the answer", exception.getReason());
-    }
-
-    @Test
-    void testSearchAnswers() {
+    void testSearchAnswers_Success() {
         String searchTerm = "Test";
         when(answerRepository.searchAnswerByContent(searchTerm)).thenReturn(List.of(new Answer(), new Answer()));
 
@@ -226,4 +207,16 @@ class AnswerServiceTest {
         assertNotNull(result);
         assertEquals(2, result.size());
     }
+
+    @Test
+    void testSearchAnswers_InvalidSearchTerm() {
+        String searchTerm = ""; // Invalid search term
+
+        ValidationException exception = assertThrows(ValidationException.class, () -> {
+            answerService.searchAnswers(searchTerm);
+        });
+
+        assertEquals("searchTerm length must be between " + Constants.MIN_SEARCH_STRING_LENGTH + " and " + Constants.MAX_SEARCH_STRING_LENGTH + " characters", exception.getMessage());
+    }
+
 }

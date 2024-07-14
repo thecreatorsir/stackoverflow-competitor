@@ -6,6 +6,8 @@ import com.stackoverflowcompetitor.model.Tag;
 import com.stackoverflowcompetitor.model.User;
 import com.stackoverflowcompetitor.repository.QuestionRepository;
 import com.stackoverflowcompetitor.repository.TagRepository;
+import com.stackoverflowcompetitor.util.Constants;
+import com.stackoverflowcompetitor.util.ValidationUtil;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +20,6 @@ import java.util.List;
 @Service
 @Slf4j
 public class QuestionService {
-    private final int minContentLength = 10;
-    private final int maxContentLength = 2000;
-    private final int minTitleLength = 5;
-    private final int maxTitleLength = 250;
-    private final int minSearchStringLength = 1;
-    private final int maxSearchStringLength = 20;
 
     @Autowired
     private QuestionRepository questionRepository;
@@ -38,14 +34,14 @@ public class QuestionService {
     public Question postQuestion(Question question, List<Long> tagIds) {
         log.info("In a postQuestion method");
         try {
-            if(validateLength(question.getContent(), minContentLength, maxContentLength)){
-                log.error("Content length must be between " + minContentLength + " and " + maxContentLength + " characters");
-                throw new ValidationException("Content length must be between " + minContentLength + " and " + maxContentLength + " characters");
+            if(ValidationUtil.validateLength(question.getContent(), Constants.MIN_CONTENT_LENGTH, Constants.MAX_CONTENT_LENGTH)){
+                log.error("Invalid Content length");
+                throw new ValidationException("Content length must be between " + Constants.MIN_CONTENT_LENGTH + " and " + Constants.MAX_CONTENT_LENGTH + " characters");
             }
 
-            if(validateLength(question.getTitle(), minTitleLength, maxTitleLength)){
-                log.error("Title length must be between " + minTitleLength + " and " + maxTitleLength + " characters");
-                throw new ValidationException("Title length must be between " + minTitleLength + " and " + maxTitleLength + " characters");
+            if(ValidationUtil.validateLength(question.getTitle(), Constants.MIN_TITLE_LENGTH, Constants.MAX_TITLE_LENGTH)){
+                log.error("Invalid Title length");
+                throw new ValidationException("Title length must be between " + Constants.MIN_TITLE_LENGTH + " and " + Constants.MAX_TITLE_LENGTH + " characters");
             }
 
             List<Tag> tags = tagRepository.findAllById(tagIds);
@@ -99,19 +95,15 @@ public class QuestionService {
         }
     }
 
-    private boolean validateLength(String input, int min, int max) {
-        return (input.length() < min || input.length() > max);
-    }
-
     public List<Question> searchQuestions(String searchTerm) {
         log.info("In a searchQuestions method");
         try {
-            if(validateLength(searchTerm, minSearchStringLength, maxSearchStringLength)){
-                throw new ValidationException("searchTerm length must be between " + minSearchStringLength + " and " + maxSearchStringLength + " characters");
+            if(ValidationUtil.validateLength(searchTerm, Constants.MIN_SEARCH_STRING_LENGTH, Constants.MAX_SEARCH_STRING_LENGTH)){
+                log.error("Invalid searchTerm length");
+                throw new ValidationException("searchTerm length must be between " + Constants.MIN_SEARCH_STRING_LENGTH + " and " + Constants.MAX_SEARCH_STRING_LENGTH + " characters");
             }
             return questionRepository.searchQuestionsByTitleOrContent(searchTerm);
         } catch (ValidationException e) {
-            log.error("searchTerm length must be between " + minSearchStringLength + " and " + maxSearchStringLength + " characters");
             throw e;
         }
         catch (Exception e) {

@@ -2,6 +2,8 @@ package com.stackoverflowcompetitor.service;
 
 import com.stackoverflowcompetitor.model.User;
 import com.stackoverflowcompetitor.repository.UserRepository;
+import com.stackoverflowcompetitor.util.Constants;
+import com.stackoverflowcompetitor.util.ValidationUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +25,6 @@ import jakarta.validation.ValidationException;
 @Slf4j
 public class UserService {
 
-    private final int minUsernameLength = 4;
-    private final int maxUsernameLength = 20;
-    private final int minPasswordLength = 7;
-    private final int maxPasswordLength = 15;
-
     @Autowired
     private UserRepository userRepository;
 
@@ -39,23 +36,19 @@ public class UserService {
 
     @Transactional
     public void registerUser(User user) {
-        if(validateLength(user.getUsername(), minUsernameLength, maxUsernameLength)){
+        if(ValidationUtil.validateLength(user.getUsername(), Constants.MIN_USERNAME_LENGTH, Constants.MAX_USERNAME_LENGTH)){
             log.error("Invalid username length");
-            throw new ValidationException("Username length must be between " + minUsernameLength + " and " + maxUsernameLength + " characters");
+            throw new ValidationException("Username length must be between " + Constants.MIN_USERNAME_LENGTH + " and " + Constants.MAX_USERNAME_LENGTH + " characters");
         }
 
-        if(validateLength(user.getPassword(), minPasswordLength, maxPasswordLength)){
+        if(ValidationUtil.validateLength(user.getPassword(), Constants.MIN_PASSWORD_LENGTH, Constants.MAX_PASSWORD_LENGTH)){
             log.error("Invalid password length");
-            throw new ValidationException("Password length must be between " + minPasswordLength + " and " + maxPasswordLength + " characters");
+            throw new ValidationException("Password length must be between " + Constants.MIN_PASSWORD_LENGTH + " and " + Constants.MAX_PASSWORD_LENGTH + " characters");
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         log.info("User registered successfully: {}", user.getUsername());
-    }
-
-    private boolean validateLength(String input, int min, int max) {
-        return (input.length() < min || input.length() > max);
     }
 
     public String loginUser(String username, String password, HttpServletRequest request) {
